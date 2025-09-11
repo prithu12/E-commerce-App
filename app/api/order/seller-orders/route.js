@@ -1,4 +1,4 @@
-import ConnectDB from "@/config/db";
+import connectDB from "@/config/db";
 import authSeller from "@/lib/authSeller";
 import Address from "@/models/Address";
 import { getAuth } from "@clerk/nextjs/server";
@@ -15,7 +15,7 @@ export async function GET(request) {
       return NextResponse.json({ success: false, message: "not authorized" });
     }
 
-    await ConnectDB();
+    await connectDB();
 
     Address.length;
 
