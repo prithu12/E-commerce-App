@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { assets } from "@/assets/assets";
 import Image from "next/image";
-
+import { useRouter } from "next/navigation";
 const HeaderSlider = () => {
   const sliderData = [
     {
@@ -42,7 +42,7 @@ const HeaderSlider = () => {
   const handleSlideChange = (index) => {
     setCurrentSlide(index);
   };
-
+  const Router = useRouter();
   return (
     <div className="overflow-hidden relative w-full">
       <div
@@ -62,7 +62,7 @@ const HeaderSlider = () => {
                 {slide.title}
               </h1>
               <div className="flex items-center mt-4 md:mt-6 ">
-                <button className="md:px-10 px-7 md:py-2.5 py-2 bg-orange-600 rounded-full text-white font-medium">
+                <button onClick={()=>Router.push("/all-products")} className="md:px-10 px-7 md:py-2.5 py-2 bg-orange-600 rounded-full text-white font-medium">
                   {slide.buttonText1}
                 </button>
                 <button className="group flex items-center gap-2 px-6 py-2.5 font-medium">

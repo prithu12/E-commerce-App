@@ -50,7 +50,7 @@ export const AppContextProvider = (props) => {
         try {
             const { data } = await axios.get("/api/product/list");
             if (data.success) {
-                setProducts([...data.products, ...productsDummyData]);
+                setProducts([...data.products]);
             } else {
                 toast.error(data.message);
             }
