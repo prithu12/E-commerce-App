@@ -1,42 +1,30 @@
 import { Inngest } from "inngest";
 import connectDB from './db';
 import User from '../models/User';
-// Create a client to send and receive events
+import Order from "../models/order";
 export const inngest = new Inngest({ id: "quickcart-next" });
 
 
 //save user data
 export const syncUserCreation = inngest.createFunction(
-    {
-        id:'sync-user-from-clerk',
+  {
+    id: "sync-user-from-clerk",
+  },
+  { event: "clerk/user.created" },
 
-    },
-    {
-        event: 'clerk/user.created',
-    },
-    async ({ event }) => {
-      try {
-        const { id, first_name, last_name, email_addresses, image_url } = event.data;
-        const userData = {
-          _id: id,
-          email: email_addresses[0]?.email_address,
-          name: `${first_name} ${last_name}`,
-          imageUrl: image_url
-        };
-        await connectDB();
-        await User.create(userData);
-      } catch (error) {
-        if (error.code === 11000) {
-          // Duplicate key error, handle gracefully
-          // Optionally update the user instead
-          await User.findOneAndUpdate({ _id: event.data.id }, userData);
-        } else {
-          console.error("Error creating user:", error);
-          throw error;
-        }
-      }
-    }
+  async ({ event }) => {
+    const { id, first_name, last_name, email_addresses, image_url } =
+      event.data;
+    const userData = {
+      _id: id,
+      email: email_addresses[0].email_address,
+      name: first_name + " " + last_name,
+      imageUrl: image_url,
+    };
 
+    await connectDB();
+    await User.create(userData);
+  }
 );
 
 //update user data
@@ -66,3 +54,31 @@ export const syncUserDeletion = inngest.createFunction(
         await User.findByIdAndDelete(id);
     }
 )
+ 
+
+export const createUserOrder = inngest.createFunction(
+  {
+    id: "create-user-order",
+    batchEvents: {
+      maxSize: 5,
+      timeout: "5s",
+    },
+  },
+  { event: "order/created" },
+  async ({ events }) => {
+    const orders = events.map((event) => {
+      return {
+        userId: event.data.userId,
+        items: event.data.items,
+        amount: event.data.amount,
+        address: event.data.address,
+        date: event.data.date,
+      };
+    });
+
+    await connectDB();
+    await Order.insertMany(orders);
+
+    return { success: true, processed: orders.length };
+  }
+);

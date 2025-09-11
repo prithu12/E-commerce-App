@@ -22,44 +22,64 @@ export const AppContextProvider = (props) => {
     const [isSeller, setIsSeller] = useState(true)
     const [cartItems, setCartItems] = useState({})
 
-    const fetchProductData = async () => {
-        setProducts(productsDummyData)
-    }
-
     const fetchUserData = async () => {
-        try{
-            if(user.publicMetadata.role === 'seller'){
+        try {
+            if (user.publicMetadata.role === "seller") {
                 setIsSeller(true);
             } else {
                 setIsSeller(false);
             }
-        const token=await getToken();
-        const {data}=await axios.get('/api/user/data',{headers:{Authorization:`Bearer ${token}`}});
-        if(data.success){
-            setUserData(data.user);
-            setCartItems(data.user.cartItems);
-
-        }else{
-            toast.error(data.message);
-        }
-
-        }
-        catch(error){
+            const token = await getToken();
+            const { data } = await axios.get("/api/user/data", {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            if (data.success) {
+                setUserData(data.user);
+                setCartItems(data.user.cartItems);
+            } else {
+                setUserData(null);
+                setCartItems({});
+                toast.error(data.message);
+            }
+        } catch (error) {
             toast.error(error.message);
         }
+    }
 
+    const fetchProductData = async () => {
+        try {
+            const { data } = await axios.get("/api/product/list");
+            if (data.success) {
+                setProducts([...data.products, ...productsDummyData]);
+            } else {
+                toast.error(data.message);
+            }
+        } catch (error) {
+            toast.error(error.message);
+        }
     }
 
     const addToCart = async (itemId) => {
-
-        let cartData = structuredClone(cartItems);
+        let cartData = structuredClone(cartItems || {});
         if (cartData[itemId]) {
             cartData[itemId] += 1;
-        }
-        else {
+        } else {
             cartData[itemId] = 1;
         }
         setCartItems(cartData);
+        if (user) {
+            try {
+                const token = await getToken();
+                await axios.post(
+                    "/api/cart/update",
+                    { cartData },
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+                toast.success("Item added to cart ");
+            } catch (error) {
+                toast.error(error.message);
+            }
+        }
 
     }
 
@@ -72,6 +92,17 @@ export const AppContextProvider = (props) => {
             cartData[itemId] = quantity;
         }
         setCartItems(cartData)
+        if(user){
+            try{
+                const token=await getToken()
+                await axios.post('/api/cart/update',{cartData},{headers:{Authorization:`Bearer ${token}`}})
+                toast.success("Cart updated");
+                
+
+            }catch(error){
+                toast.error(error.message);
+            }
+        }
 
     }
 
@@ -104,8 +135,7 @@ export const AppContextProvider = (props) => {
         if(user){
             fetchUserData()
         }
-        fetchUserData()
-    }, [])
+    }, [user])
 
     const value = {
         user,getToken,

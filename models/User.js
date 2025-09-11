@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+
 const userSchema = new mongoose.Schema({
     _id: { type: String, required: true },
     email: { type: String, required: true},
@@ -7,5 +8,5 @@ const userSchema = new mongoose.Schema({
     cartItems: { type: Object, default: {} },
 
 },{minimize:false});
-const User= mongoose.models.Userser || mongoose.model('user', userSchema);
-export default User;
+
+export default mongoose.models.User || mongoose.model("User", userSchema);
